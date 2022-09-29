@@ -78,6 +78,7 @@ requirements = StandardRequirements.Enum
 displayData = StandardDisplayData.DisplayData
 
 java_class_lookup = ExpansionMethods.Enum.JAVA_CLASS_LOOKUP
+schematransform_based_expand = ExpansionMethods.Enum.SCHEMATRANSFORM
 
 micros_instant = LogicalTypes.Enum.MICROS_INSTANT
 millis_instant = LogicalTypes.Enum.MILLIS_INSTANT

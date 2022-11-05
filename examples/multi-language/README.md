@@ -17,6 +17,8 @@
     under the License.
 -->
 
+TEST
+
 # Example multi-language pipelines
 
 This project provides examples of Apache Beam

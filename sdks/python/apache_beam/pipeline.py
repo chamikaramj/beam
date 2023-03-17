@@ -582,8 +582,10 @@ class Pipeline(object):
 
   def __enter__(self):
     # type: () -> Pipeline
+    cross_language_options = self._options.view_as(CrossLanguageOptions)
     self._extra_context = subprocess_server.JavaJarServer.beam_services(
-        self._options.view_as(CrossLanguageOptions).beam_services)
+        cross_language_options.beam_services,
+        cross_language_options.beam_services_repo)
     self._extra_context.__enter__()
     return self
 

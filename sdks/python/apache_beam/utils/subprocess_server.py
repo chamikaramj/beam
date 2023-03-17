@@ -161,6 +161,7 @@ class JavaJarServer(SubprocessServer):
   _BEAM_SERVICES = type(
       'local', (threading.local, ),
       dict(__init__=lambda self: setattr(self, 'replacements', {})))()
+  _BEAM_SERVICES_REPOSIROTY = MAVEN_CENTRAL_REPOSITORY
 
   def __init__(self, stub_class, path_to_jar, java_arguments, classpath=None):
     if classpath:
@@ -246,11 +247,14 @@ class JavaJarServer(SubprocessServer):
               'Please build the server with \n  cd %s; ./gradlew %s') %
           (local_path, os.path.abspath(project_root), gradle_target))
     else:
+      repository = (
+        cls._BEAM_SERVICES_REPOSIROTY if cls._BEAM_SERVICES_REPOSIROTY
+        else cls.MAVEN_CENTRAL_REPOSITORY)
       return cls.path_to_maven_jar(
           artifact_id,
           cls.BEAM_GROUP_ID,
           version,
-          cls.MAVEN_CENTRAL_REPOSITORY,
+          repository,
           appendix=appendix)
 
   @classmethod
@@ -283,7 +287,7 @@ class JavaJarServer(SubprocessServer):
 
   @classmethod
   @contextlib.contextmanager
-  def beam_services(cls, replacements):
+  def beam_services(cls, replacements, repository):
     try:
       old = cls._BEAM_SERVICES.replacements
       cls._BEAM_SERVICES.replacements = dict(old, **replacements)

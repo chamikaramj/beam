@@ -484,6 +484,94 @@ else
   echo "* Skipping Python Leaderboard & GameStates Validations"
 fi
 
+
+echo ""
+echo "====================Starting Python Cross-language Quickstart Validations==============="
+if [[ ("$python_xlang_quickstart" = true) \
+      && ! -z `which gnome-terminal` && ! -z `which kubectl` ]]; then
+  cd ${LOCAL_BEAM_DIR}
+
+  echo "---------------------Downloading Python Staging RC----------------------------"
+  wget ${PYTHON_RC_DOWNLOAD_URL}/${RELEASE_VER}/python/apache-beam-${RELEASE_VER}.zip
+  wget ${PYTHON_RC_DOWNLOAD_URL}/${RELEASE_VER}/python/apache-beam-${RELEASE_VER}.zip.sha512
+  if [[ ! -f apache-beam-${RELEASE_VER}.zip ]]; then
+    { echo "Failed to download Python Staging RC files." ;exit 1; }
+  fi
+
+  echo "--------------------------Verifying Hashes------------------------------------"
+  sha512sum -c apache-beam-${RELEASE_VER}.zip.sha512
+
+  `which pip` install --upgrade pip
+  `which pip` install --upgrade setuptools
+
+  echo "-----------------------Setting up Shell Env Vars------------------------------"
+  set_bashrc
+
+  # Run Python Multi-language pipelines under multiple versions of Python using DirectRunner
+  cd ${LOCAL_BEAM_DIR}
+  for py_version in "${PYTHON_VERSIONS_TO_VALIDATE[@]}"
+  do
+    rm -rf ./beam_env_${py_version}
+    echo "--------------Setting up virtualenv with $py_version interpreter----------------"
+    $py_version -m venv beam_env_${py_version}
+    . ./beam_env_${py_version}/bin/activate
+    pip install --upgrade pip setuptools wheel
+    ln -s ${LOCAL_BEAM_DIR}/sdks beam_env_${py_version}/lib/sdks
+
+    echo "--------------------------Installing Python SDK-------------------------------"
+    pip install apache-beam-${RELEASE_VER}.zip
+
+    echo '************************************************************';
+    echo '* Running Python Multi-language Quickstart with DirectRunner';
+    echo '************************************************************';
+
+    PYTHON_MULTILANG_QICKSTART_INPUT_FILE_NAME = python_multilang_quickstart_input
+    PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME = python_multilang_quickstart_output
+
+    # Cleaning up any existing input or output files
+    rm $PYTHON_MULTILANG_QICKSTART_INPUT_FILE_NAME
+    gsutil rm $PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME*
+
+    # Generating an input file.
+    input_data = ( "aaa" "bbb" "ccc" "ddd" "eee")
+
+    $PYTHON_MULTILANG_QICKSTART_EXPECTED_OUTPUT_FILE_NAME = ${PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME}_expected
+    touch $PYTHON_MULTILANG_QICKSTART_INPUT_FILE_NAME
+    touch $$PYTHON_MULTILANG_QICKSTART_EXPECTED_OUTPUT_FILE_NAME
+
+    PYTHON_MULTILANG_QICKSTART_EXPECTED_OUTPUT_FILE_NAME = $PYTHON_MULTILANG_QICKSTART_EXPECTED_OUTPUT_FILE_NAME_expected
+    for item in ${input_data[*]}
+      do
+        echo $item >> $PYTHON_MULTILANG_QICKSTART_INPUT_FILE_NAME
+        echo java:$item >> $$PYTHON_MULTILANG_QICKSTART_EXPECTED_OUTPUT_FILE_NAME
+      done
+
+    # Running the pipeline
+    # The output cannot be directly written to local file system since execution will be done within a Docker container. So we write to GCS and later download output for validation.
+    python addprefix.py --runner DirectRunner --environment_type=DOCKER --input $PYTHON_MULTILANG_QICKSTART_INPUT_FILE_NAME --output ${USER_GCS_BUCKET}/output/$PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME --beam_service "" --beam_service_repo ""
+
+    # Validating output
+    PYTHON_MULTILANG_QICKSTART_SORTED_OUTPUT_FILE_NAME = ${PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME}_sorted
+    gsutil cat ${USER_GCS_BUCKET}/output/${PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME}* >> ${PYTHON_MULTILANG_QICKSTART_SORTED_OUTPUT_FILE_NAME}
+    sort $PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME > $PYTHON_MULTILANG_QICKSTART_SORTED_OUTPUT_FILE_NAME
+
+    if cmp --silent -- $PYTHON_MULTILANG_QICKSTART_EXPECTED_OUTPUT_FILE_NAME $$PYTHON_MULTILANG_QICKSTART_SORTED_OUTPUT_FILE_NAME; then
+      echo "Successfully validated Python multi-language quickstart example."
+    else
+      { echo "Python multi-language quickstart output validation failed." ;exit 1; }
+    fi
+
+    # Cleaning up
+    rm $PYTHON_MULTILANG_QICKSTART_INPUT_FILE_NAME
+    gsutil rm ${USER_GCS_BUCKET}/output/${PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME}*
+    rm  ${PYTHON_MULTILANG_QICKSTART_OUTPUT_FILE_NAME}*
+    rm
+  done # Loop over Python versions.
+else
+  echo "* Skipping Python Cross-language Dataflow Validations"
+fi
+
+
 echo ""
 echo "====================Starting Python Cross-language Validations==============="
 if [[ ("$python_xlang_kafka_taxi_dataflow" = true
@@ -519,7 +607,7 @@ if [[ ("$python_xlang_kafka_taxi_dataflow" = true
     echo "* Skipping Kafka cluster setup"
   fi
 
-  # Run Python XLang pipelines under multiple versions of Python
+  # Run Python XLang pipelines under multiple versions of Python using Dataflow Runner
   cd ${LOCAL_BEAM_DIR}
   for py_version in "${PYTHON_VERSIONS_TO_VALIDATE[@]}"
   do
@@ -630,7 +718,7 @@ if [[ ("$python_xlang_kafka_taxi_dataflow" = true
     fi
   done # Loop over Python versions.
 else
-  echo "* Skipping Python Cross-language Validations"
+  echo "* Skipping Python Cross-language Dataflow Validations"
 fi
 echo "*************************************************************"
 echo " NOTE: Streaming pipelines are not automatically canceled.   "

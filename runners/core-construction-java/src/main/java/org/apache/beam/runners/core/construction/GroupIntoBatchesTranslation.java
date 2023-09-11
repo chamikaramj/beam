@@ -26,7 +26,9 @@ import org.apache.beam.runners.core.construction.PTransformTranslation.Transform
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.GroupIntoBatches;
 import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @SuppressWarnings({
   "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
@@ -40,6 +42,11 @@ public class GroupIntoBatchesTranslation {
       implements TransformPayloadTranslator<GroupIntoBatches<?, ?>> {
     @Override
     public String getUrn(GroupIntoBatches<?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.GROUP_INTO_BATCHES_URN;
     }
 
@@ -52,6 +59,16 @@ public class GroupIntoBatchesTranslation {
               getPayloadFromParameters(transform.getTransform().getBatchingParams()).toByteString())
           .build();
     }
+
+    @Override
+    public @Nullable Row toConfigRow(GroupIntoBatches<?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable GroupIntoBatches<?, ?> fromConfigRow(Row configRow) {
+      return null;
+    }
   }
 
   /**
@@ -62,6 +79,11 @@ public class GroupIntoBatchesTranslation {
       implements TransformPayloadTranslator<GroupIntoBatches<?, ?>.WithShardedKey> {
     @Override
     public String getUrn(GroupIntoBatches<?, ?>.WithShardedKey transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.GROUP_INTO_BATCHES_WITH_SHARDED_KEY_URN;
     }
 
@@ -74,6 +96,16 @@ public class GroupIntoBatchesTranslation {
           .setPayload(
               getPayloadFromParameters(transform.getTransform().getBatchingParams()).toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(GroupIntoBatches<?, ?>.WithShardedKey transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable GroupIntoBatches<?, ?>.WithShardedKey fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

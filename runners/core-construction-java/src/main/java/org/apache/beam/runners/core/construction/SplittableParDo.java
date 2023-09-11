@@ -72,6 +72,7 @@ import org.apache.beam.sdk.values.PCollectionTuple;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.PCollectionViews;
 import org.apache.beam.sdk.values.PValue;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.sdk.values.TupleTagList;
 import org.apache.beam.sdk.values.WindowingStrategy;
@@ -396,6 +397,11 @@ public class SplittableParDo<InputT, OutputT, RestrictionT, WatermarkEstimatorSt
 
     @Override
     public String getUrn(ProcessKeyedElements<?, ?, ?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.SPLITTABLE_PROCESS_KEYED_URN;
     }
 
@@ -491,6 +497,16 @@ public class SplittableParDo<InputT, OutputT, RestrictionT, WatermarkEstimatorSt
           .setUrn(getUrn(pke))
           .setPayload(payload.toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(ProcessKeyedElements<?, ?, ?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable ProcessKeyedElements<?, ?, ?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

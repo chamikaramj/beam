@@ -26,6 +26,8 @@ import org.apache.beam.runners.core.construction.PTransformTranslation.Transform
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.GroupByKey;
 import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.Row;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility methods for translating a {@link GroupByKey} to and from {@link RunnerApi}
@@ -39,6 +41,11 @@ public class GroupByKeyTranslation {
   static class GroupByKeyTranslator implements TransformPayloadTranslator<GroupByKey<?, ?>> {
     @Override
     public String getUrn(GroupByKey<?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.GROUP_BY_KEY_TRANSFORM_URN;
     }
 
@@ -46,6 +53,16 @@ public class GroupByKeyTranslation {
     public FunctionSpec translate(
         AppliedPTransform<?, ?, GroupByKey<?, ?>> transform, SdkComponents components) {
       return FunctionSpec.newBuilder().setUrn(getUrn(transform.getTransform())).build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(GroupByKey<?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable GroupByKey<?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

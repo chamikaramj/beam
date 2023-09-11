@@ -105,6 +105,16 @@ dependencies {
   testImplementation library.java.testcontainers_kafka
   testImplementation library.java.testcontainers_gcloud
 
+
+  runtimeOnly project(path: ":runners:portability:java")
+  implementation project(":sdks:java:expansion-service")
+  permitUnusedDeclared project(":sdks:java:expansion-service") // BEAM-11761
+
+  // TODO: remove
+  implementation project(":runners:core-construction-java")
+  permitUnusedDeclared project(":runners:core-construction-java")
+
+
   // Add dependencies for the PreCommit configurations
   // For each runner a project level dependency on the examples project.
   for (String runner : preCommitRunners) {
@@ -172,4 +182,16 @@ task wordCount(type:JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   systemProperties = System.getProperties()
   args = ["--output=/tmp/ouput.txt"]
+}
+
+task impulseReplace(type: JavaExec) {
+  description "Run the Java word count example using external Python DataframeTransform"
+  mainClass = "org.apache.beam.examples.ImpulseReplace"
+  classpath = sourceSets.main.runtimeClasspath
+}
+
+task createReplace(type: JavaExec) {
+  description "Run the Java word count example using external Python DataframeTransform"
+  mainClass = "org.apache.beam.examples.CreateReplace"
+  classpath = sourceSets.main.runtimeClasspath
 }

@@ -34,7 +34,9 @@ import org.apache.beam.sdk.transforms.View.CreatePCollectionView;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.ByteString;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility methods for translating a {@link View} transforms to and from {@link RunnerApi}
@@ -91,6 +93,11 @@ public class CreatePCollectionViewTranslation {
       implements TransformPayloadTranslator<View.CreatePCollectionView<?, ?>> {
     @Override
     public String getUrn(View.CreatePCollectionView<?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.CREATE_VIEW_TRANSFORM_URN;
     }
 
@@ -104,6 +111,16 @@ public class CreatePCollectionViewTranslation {
               ByteString.copyFrom(
                   SerializableUtils.serializeToByteArray(transform.getTransform().getView())))
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(CreatePCollectionView<?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public View.@Nullable CreatePCollectionView<?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

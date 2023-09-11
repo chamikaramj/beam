@@ -45,6 +45,7 @@ import org.apache.beam.sdk.util.common.ReflectHelpers.ObjectsClassComparator;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PInput;
 import org.apache.beam.sdk.values.POutput;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Joiner;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
@@ -69,6 +70,7 @@ public class PTransformTranslation {
   // and we validate that the value matches the actual URN in the static block below.
 
   // Primitives
+  public static final String CREATE_TRANSFORM_URN = "beam:transform:create:v1";
   public static final String PAR_DO_TRANSFORM_URN = "beam:transform:pardo:v1";
   public static final String FLATTEN_TRANSFORM_URN = "beam:transform:flatten:v1";
   public static final String GROUP_BY_KEY_TRANSFORM_URN = "beam:transform:group_by_key:v1";
@@ -386,9 +388,9 @@ public class PTransformTranslation {
    * Translates a set of registered transforms whose content only differs based by differences in
    * their {@link FunctionSpec}s and URNs.
    */
-  private static class KnownTransformPayloadTranslator<T extends PTransform<?, ?>>
+  public static class KnownTransformPayloadTranslator<T extends PTransform<?, ?>>
       implements TransformTranslator<T> {
-    private static final Map<Class<? extends PTransform>, TransformPayloadTranslator>
+    public static final Map<Class<? extends PTransform>, TransformPayloadTranslator>
         KNOWN_PAYLOAD_TRANSLATORS = loadTransformPayloadTranslators();
 
     private static Map<Class<? extends PTransform>, TransformPayloadTranslator>
@@ -512,9 +514,16 @@ public class PTransformTranslation {
   public interface TransformPayloadTranslator<T extends PTransform<?, ?>> {
     String getUrn(T transform);
 
+    String getUrn();
+
     @Nullable
     FunctionSpec translate(AppliedPTransform<?, ?, T> application, SdkComponents components)
         throws IOException;
+
+    @Nullable
+    Row toConfigRow(T transform);
+
+    @Nullable T fromConfigRow(Row configRow);
 
     /**
      * A {@link TransformPayloadTranslator} for transforms that contain no references to components,
@@ -527,7 +536,22 @@ public class PTransformTranslation {
         return new NotSerializable<PTransform<?, ?>>() {
           @Override
           public String getUrn(PTransform<?, ?> transform) {
+            return getUrn();
+          }
+
+          @Override
+          public String getUrn() {
             return urn;
+          }
+
+          @Override
+          public @Nullable Row toConfigRow(PTransform<?, ?> transform) {
+            return null;
+          }
+
+          @Override
+          public @Nullable PTransform<?, ?> fromConfigRow(Row configRow) {
+            return null;
           }
         };
       }

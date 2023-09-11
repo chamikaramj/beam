@@ -35,8 +35,10 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.util.CoderUtils;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TimestampedValue;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.ByteString;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.joda.time.Duration;
 import org.joda.time.Instant;
 
@@ -169,6 +171,11 @@ public class TestStreamTranslation {
   static class TestStreamTranslator implements TransformPayloadTranslator<TestStream<?>> {
     @Override
     public String getUrn(TestStream<?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return TEST_STREAM_TRANSFORM_URN;
     }
 
@@ -177,6 +184,16 @@ public class TestStreamTranslation {
         final AppliedPTransform<?, ?, TestStream<?>> transform, SdkComponents components)
         throws IOException {
       return translateTyped(transform.getTransform(), components);
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(TestStream<?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable TestStream<?> fromConfigRow(Row configRow) {
+      return null;
     }
 
     private <T> RunnerApi.FunctionSpec translateTyped(

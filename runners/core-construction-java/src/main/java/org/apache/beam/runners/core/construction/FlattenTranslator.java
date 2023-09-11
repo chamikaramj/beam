@@ -25,8 +25,11 @@ import org.apache.beam.model.pipeline.v1.RunnerApi.FunctionSpec;
 import org.apache.beam.runners.core.construction.PTransformTranslation.TransformPayloadTranslator;
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.Flatten;
+import org.apache.beam.sdk.transforms.Flatten.PCollections;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.windowing.Window.Assign;
+import org.apache.beam.sdk.values.Row;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility methods for translating a {@link Assign} to and from {@link RunnerApi} representations.
@@ -44,6 +47,11 @@ public class FlattenTranslator implements TransformPayloadTranslator<Flatten.PCo
 
   @Override
   public String getUrn(Flatten.PCollections<?> transform) {
+    return getUrn();
+  }
+
+  @Override
+  public String getUrn() {
     return PTransformTranslation.FLATTEN_TRANSFORM_URN;
   }
 
@@ -51,6 +59,16 @@ public class FlattenTranslator implements TransformPayloadTranslator<Flatten.PCo
   public FunctionSpec translate(
       AppliedPTransform<?, ?, Flatten.PCollections<?>> transform, SdkComponents components) {
     return RunnerApi.FunctionSpec.newBuilder().setUrn(getUrn(transform.getTransform())).build();
+  }
+
+  @Override
+  public @Nullable Row toConfigRow(PCollections<?> transform) {
+    return null;
+  }
+
+  @Override
+  public Flatten.@Nullable PCollections<?> fromConfigRow(Row configRow) {
+    return null;
   }
 
   /** Registers {@link FlattenTranslator}. */

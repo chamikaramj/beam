@@ -34,15 +34,20 @@ import org.apache.beam.sdk.coders.IterableCoder;
 import org.apache.beam.sdk.coders.KvCoder;
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.Combine;
+import org.apache.beam.sdk.transforms.Combine.Globally;
+import org.apache.beam.sdk.transforms.Combine.GroupedValues;
+import org.apache.beam.sdk.transforms.Combine.PerKey;
 import org.apache.beam.sdk.transforms.CombineFnBase.GlobalCombineFn;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.ByteString;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Methods for translating between {@link Combine} {@link PTransform PTransforms} and {@link
@@ -62,6 +67,11 @@ public class CombineTranslation {
 
     @Override
     public String getUrn(Combine.PerKey<?, ?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return COMBINE_PER_KEY_TRANSFORM_URN;
     }
 
@@ -82,6 +92,16 @@ public class CombineTranslation {
         // FunctionSpec.
         return null;
       }
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(PerKey<?, ?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public Combine.@Nullable PerKey<?, ?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
 
     private static <K, InputT, AccumT> Coder<AccumT> extractAccumulatorCoder(
@@ -109,6 +129,11 @@ public class CombineTranslation {
 
     @Override
     public String getUrn(Combine.Globally<?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return COMBINE_GLOBALLY_TRANSFORM_URN;
     }
 
@@ -127,6 +152,16 @@ public class CombineTranslation {
         // FunctionSpec.
         return null;
       }
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(Globally<?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public Combine.@Nullable Globally<?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
 
     private static <InputT, AccumT> Coder<AccumT> extractAccumulatorCoder(
@@ -166,6 +201,11 @@ public class CombineTranslation {
 
     @Override
     public String getUrn(Combine.GroupedValues<?, ?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return COMBINE_GROUPED_VALUES_TRANSFORM_URN;
     }
 
@@ -186,6 +226,16 @@ public class CombineTranslation {
         // FunctionSpec.
         return null;
       }
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(GroupedValues<?, ?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public Combine.@Nullable GroupedValues<?, ?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
 
     private static <K, InputT, AccumT> Coder<AccumT> extractAccumulatorCoder(

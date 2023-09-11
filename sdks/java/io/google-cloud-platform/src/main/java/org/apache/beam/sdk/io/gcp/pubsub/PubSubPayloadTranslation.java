@@ -32,13 +32,17 @@ import org.apache.beam.sdk.io.Read;
 import org.apache.beam.sdk.io.Read.Unbounded;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubClient.SubscriptionPath;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubClient.TopicPath;
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubUnboundedSink.PubsubDynamicSink;
+import org.apache.beam.sdk.io.gcp.pubsub.PubsubUnboundedSink.PubsubSink;
 import org.apache.beam.sdk.io.gcp.pubsub.PubsubUnboundedSource.PubsubSource;
 import org.apache.beam.sdk.options.ValueProvider;
 import org.apache.beam.sdk.options.ValueProvider.NestedValueProvider;
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.util.Preconditions;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 @SuppressWarnings({
   "nullness" // TODO(https://github.com/apache/beam/issues/20497)
@@ -56,6 +60,11 @@ public class PubSubPayloadTranslation {
       if (!(transform.getSource() instanceof PubsubUnboundedSource.PubsubSource)) {
         return null;
       }
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.PUBSUB_READ;
     }
 
@@ -101,12 +110,27 @@ public class PubSubPayloadTranslation {
           .setPayload(payloadBuilder.build().toByteString())
           .build();
     }
+
+    @Override
+    public @Nullable Row toConfigRow(Unbounded<?> transform) {
+      return null;
+    }
+
+    @Override
+    public Read.@Nullable Unbounded<?> fromConfigRow(Row configRow) {
+      return null;
+    }
   }
 
   static class PubSubWritePayloadTranslator
       implements TransformPayloadTranslator<PubsubUnboundedSink.PubsubSink> {
     @Override
     public String getUrn(PubsubUnboundedSink.PubsubSink transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.PUBSUB_WRITE;
     }
 
@@ -135,12 +159,27 @@ public class PubSubPayloadTranslation {
           .setPayload(payloadBuilder.build().toByteString())
           .build();
     }
+
+    @Override
+    public @Nullable Row toConfigRow(PubsubSink transform) {
+      return null;
+    }
+
+    @Override
+    public PubsubUnboundedSink.@Nullable PubsubSink fromConfigRow(Row configRow) {
+      return null;
+    }
   }
 
   static class PubSubDynamicWritePayloadTranslator
       implements TransformPayloadTranslator<PubsubUnboundedSink.PubsubDynamicSink> {
     @Override
     public String getUrn(PubsubUnboundedSink.PubsubDynamicSink transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.PUBSUB_WRITE_DYNAMIC;
     }
 
@@ -160,6 +199,16 @@ public class PubSubPayloadTranslation {
           .setUrn(getUrn(transform.getTransform()))
           .setPayload(payloadBuilder.build().toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(PubsubDynamicSink transform) {
+      return null;
+    }
+
+    @Override
+    public PubsubUnboundedSink.@Nullable PubsubDynamicSink fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

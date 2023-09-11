@@ -437,7 +437,7 @@ public class External {
       return IMPULSE_PREFIX;
     }
 
-    RunnerApi.PTransform getExpandedTransform() {
+    public RunnerApi.PTransform getExpandedTransform() {
       return expandedTransform;
     }
 

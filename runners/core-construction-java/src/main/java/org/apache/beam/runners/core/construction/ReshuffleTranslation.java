@@ -26,6 +26,8 @@ import org.apache.beam.runners.core.construction.PTransformTranslation.Transform
 import org.apache.beam.sdk.runners.AppliedPTransform;
 import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.Reshuffle;
+import org.apache.beam.sdk.values.Row;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility methods for translating a {@link Reshuffle} to and from {@link RunnerApi}
@@ -39,6 +41,11 @@ public class ReshuffleTranslation {
   static class ReshuffleTranslator implements TransformPayloadTranslator<Reshuffle<?, ?>> {
     @Override
     public String getUrn(Reshuffle<?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.RESHUFFLE_URN;
     }
 
@@ -46,6 +53,16 @@ public class ReshuffleTranslation {
     public FunctionSpec translate(
         AppliedPTransform<?, ?, Reshuffle<?, ?>> transform, SdkComponents components) {
       return FunctionSpec.newBuilder().setUrn(getUrn(transform.getTransform())).build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(Reshuffle<?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable Reshuffle<?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

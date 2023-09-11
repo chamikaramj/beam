@@ -167,6 +167,7 @@ import org.apache.beam.sdk.util.ShardedKey;
 import org.apache.beam.sdk.values.KV;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PValues;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TimestampedValue;
 import org.apache.beam.sdk.values.TypeDescriptors;
 import org.apache.beam.sdk.values.WindowingStrategy;
@@ -1633,6 +1634,11 @@ public class DataflowRunnerTest implements Serializable {
       implements TransformPayloadTranslator<TestTransform> {
     @Override
     public String getUrn(TestTransform transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return "test_transform";
     }
 
@@ -1641,6 +1647,16 @@ public class DataflowRunnerTest implements Serializable {
         AppliedPTransform<?, ?, TestTransform> application, SdkComponents components)
         throws IOException {
       return RunnerApi.FunctionSpec.newBuilder().setUrn(getUrn(application.getTransform())).build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(TestTransform transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable TestTransform fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

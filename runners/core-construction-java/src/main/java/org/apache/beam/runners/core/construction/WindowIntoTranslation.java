@@ -32,6 +32,7 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.transforms.windowing.Window;
 import org.apache.beam.sdk.transforms.windowing.Window.Assign;
 import org.apache.beam.sdk.transforms.windowing.WindowFn;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.InvalidProtocolBufferException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -48,6 +49,11 @@ public class WindowIntoTranslation {
 
     @Override
     public String getUrn(Assign<?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.ASSIGN_WINDOWS_TRANSFORM_URN;
     }
 
@@ -59,6 +65,16 @@ public class WindowIntoTranslation {
           .setPayload(
               WindowIntoTranslation.toProto(transform.getTransform(), components).toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(Assign<?> transform) {
+      return null;
+    }
+
+    @Override
+    public Window.@Nullable Assign<?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 
@@ -117,6 +133,11 @@ public class WindowIntoTranslation {
 
     @Override
     public String getUrn(Window.Assign<?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.ASSIGN_WINDOWS_TRANSFORM_URN;
     }
 
@@ -128,6 +149,16 @@ public class WindowIntoTranslation {
           .setUrn(getUrn(transform.getTransform()))
           .setPayload(payload.toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(Assign<?> transform) {
+      return null;
+    }
+
+    @Override
+    public Window.@Nullable Assign<?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

@@ -28,6 +28,8 @@ import org.apache.beam.model.pipeline.v1.RunnerApi.FunctionSpec;
 import org.apache.beam.model.pipeline.v1.RunnerApi.IsBounded;
 import org.apache.beam.model.pipeline.v1.RunnerApi.ReadPayload;
 import org.apache.beam.runners.core.construction.PTransformTranslation.TransformPayloadTranslator;
+import org.apache.beam.runners.core.construction.SplittableParDo.PrimitiveBoundedRead;
+import org.apache.beam.runners.core.construction.SplittableParDo.PrimitiveUnboundedRead;
 import org.apache.beam.sdk.io.BoundedSource;
 import org.apache.beam.sdk.io.Source;
 import org.apache.beam.sdk.io.UnboundedSource;
@@ -36,9 +38,11 @@ import org.apache.beam.sdk.transforms.PTransform;
 import org.apache.beam.sdk.util.SerializableUtils;
 import org.apache.beam.sdk.values.PBegin;
 import org.apache.beam.sdk.values.PCollection;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.ByteString;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.ImmutableMap;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Methods for translating {@link SplittableParDo.PrimitiveBoundedRead} and {@link
@@ -155,6 +159,11 @@ public class ReadTranslation {
 
     @Override
     public String getUrn(SplittableParDo.PrimitiveUnboundedRead<?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.READ_TRANSFORM_URN;
     }
 
@@ -167,6 +176,16 @@ public class ReadTranslation {
           .setUrn(getUrn(transform.getTransform()))
           .setPayload(payload.toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(PrimitiveUnboundedRead<?> transform) {
+      return null;
+    }
+
+    @Override
+    public SplittableParDo.@Nullable PrimitiveUnboundedRead<?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 
@@ -182,6 +201,11 @@ public class ReadTranslation {
 
     @Override
     public String getUrn(SplittableParDo.PrimitiveBoundedRead<?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.READ_TRANSFORM_URN;
     }
 
@@ -194,6 +218,16 @@ public class ReadTranslation {
           .setUrn(getUrn(transform.getTransform()))
           .setPayload(payload.toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(PrimitiveBoundedRead<?> transform) {
+      return null;
+    }
+
+    @Override
+    public SplittableParDo.@Nullable PrimitiveBoundedRead<?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

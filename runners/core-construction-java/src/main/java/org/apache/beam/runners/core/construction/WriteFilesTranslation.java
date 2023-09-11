@@ -44,11 +44,13 @@ import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.PInput;
 import org.apache.beam.sdk.values.POutput;
 import org.apache.beam.sdk.values.PValue;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.grpc.v1p54p0.com.google.protobuf.ByteString;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.MoreObjects;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Lists;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility methods for translating a {@link WriteFiles} to and from {@link RunnerApi}
@@ -277,6 +279,11 @@ public class WriteFilesTranslation {
   static class WriteFilesTranslator implements TransformPayloadTranslator<WriteFiles<?, ?, ?>> {
     @Override
     public String getUrn(WriteFiles<?, ?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return WRITE_FILES_TRANSFORM_URN;
     }
 
@@ -288,6 +295,16 @@ public class WriteFilesTranslation {
           .setUrn(getUrn(transform.getTransform()))
           .setPayload(payloadForWriteFiles(transform.getTransform(), components).toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(WriteFiles<?, ?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable WriteFiles<?, ?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
   }
 

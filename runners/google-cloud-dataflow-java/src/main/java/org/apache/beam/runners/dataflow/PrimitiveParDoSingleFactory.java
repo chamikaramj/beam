@@ -65,9 +65,11 @@ import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.PCollectionView;
 import org.apache.beam.sdk.values.PCollectionViews;
 import org.apache.beam.sdk.values.PValue;
+import org.apache.beam.sdk.values.Row;
 import org.apache.beam.sdk.values.TupleTag;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Iterables;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.collect.Sets;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * A {@link PTransformOverrideFactory} that produces {@link ParDoSingle} instances from {@link
@@ -158,6 +160,11 @@ public class PrimitiveParDoSingleFactory<InputT, OutputT>
 
     @Override
     public String getUrn(ParDoSingle<?, ?> transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PAR_DO_TRANSFORM_URN;
     }
 
@@ -171,6 +178,16 @@ public class PrimitiveParDoSingleFactory<InputT, OutputT>
           .setUrn(PAR_DO_TRANSFORM_URN)
           .setPayload(payload.toByteString())
           .build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(ParDoSingle<?, ?> transform) {
+      return null;
+    }
+
+    @Override
+    public @Nullable ParDoSingle<?, ?> fromConfigRow(Row configRow) {
+      return null;
     }
 
     private static RunnerApi.ParDoPayload payloadForParDoSingle(

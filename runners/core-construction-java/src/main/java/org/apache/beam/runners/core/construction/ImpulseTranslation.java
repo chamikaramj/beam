@@ -25,8 +25,11 @@ import org.apache.beam.model.pipeline.v1.RunnerApi;
 import org.apache.beam.model.pipeline.v1.RunnerApi.FunctionSpec;
 import org.apache.beam.runners.core.construction.PTransformTranslation.TransformPayloadTranslator;
 import org.apache.beam.sdk.runners.AppliedPTransform;
+import org.apache.beam.sdk.schemas.Schema;
 import org.apache.beam.sdk.transforms.Impulse;
 import org.apache.beam.sdk.transforms.PTransform;
+import org.apache.beam.sdk.values.Row;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Utility methods for translating a {@link Impulse} to and from {@link RunnerApi} representations.
@@ -38,6 +41,11 @@ public class ImpulseTranslation {
   private static class ImpulseTranslator implements TransformPayloadTranslator<Impulse> {
     @Override
     public String getUrn(Impulse transform) {
+      return getUrn();
+    }
+
+    @Override
+    public String getUrn() {
       return PTransformTranslation.IMPULSE_TRANSFORM_URN;
     }
 
@@ -45,6 +53,22 @@ public class ImpulseTranslation {
     public FunctionSpec translate(
         AppliedPTransform<?, ?, Impulse> application, SdkComponents components) throws IOException {
       return FunctionSpec.newBuilder().setUrn(getUrn(application.getTransform())).build();
+    }
+
+    @Override
+    public @Nullable Row toConfigRow(Impulse transform) {
+      Impulse impulse = (Impulse) transform;
+      System.out.println("Found impulse transform: " + impulse);
+      Schema schema = Schema.builder().build();
+      return Row.nullRow(schema);
+    }
+
+    @Override
+    public @Nullable Impulse fromConfigRow(Row configRow) {
+      if (configRow.getFieldCount() != 0) {
+        throw new IllegalArgumentException("Received an unexpected construction Row for impulse");
+      }
+      return Impulse.create();
     }
   }
 

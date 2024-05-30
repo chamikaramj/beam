@@ -39,8 +39,10 @@ import com.google.api.services.dataflow.model.SdkHarnessContainerImage;
 import com.google.api.services.dataflow.model.WorkerPool;
 import com.google.auto.service.AutoService;
 import com.google.auto.value.AutoValue;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -203,6 +205,7 @@ import org.slf4j.LoggerFactory;
   "rawtypes", // TODO(https://github.com/apache/beam/issues/20447)
   "nullness" // TODO(https://github.com/apache/beam/issues/20497)
 })
+@SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
 public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
 
   /** Experiment to "unsafely attempt to process unbounded data in batch mode". */
@@ -1226,6 +1229,19 @@ public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
         options.getStager().stageToFile(serializedProtoPipeline, PIPELINE_FILE_NAME);
     dataflowOptions.setPipelineUrl(stagedPipeline.getLocation());
 
+    // Also writing locally for testing.
+    String localFileName =
+        "/Users/chamikara/testing/managed_transforms/prototype" + "/" + PIPELINE_FILE_NAME;
+    File localFile = new File(localFileName);
+
+    try {
+      FileOutputStream outputStream = new FileOutputStream(localFile);
+      outputStream.write(serializedProtoPipeline);
+      outputStream.close();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     if (useUnifiedWorker(options)) {
       LOG.info("Skipping v1 transform replacements since job will run on v2.");
     } else {
@@ -1446,6 +1462,16 @@ public class DataflowRunner extends PipelineRunner<DataflowPipelineJob> {
     if (options.getCreateFromSnapshot() != null && !options.getCreateFromSnapshot().isEmpty()) {
       newJob.setTransformNameMapping(options.getTransformNameMapping());
       newJob.setCreatedFromSnapshotId(options.getCreateFromSnapshot());
+    }
+
+    System.out.println(
+        "Final pipeline proto: \n"
+            + TextFormat.printer().printToString(portablePipelineProto)
+            + "\n\n");
+
+    boolean b = true;
+    if (b) {
+      throw new RuntimeException("Intentionally failing ...");
     }
 
     Job jobResult;

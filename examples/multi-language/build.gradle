@@ -31,16 +31,56 @@ provideIntegrationTestingDependencies()
 description = "Apache Beam :: Examples :: Multi Language"
 ext.summary = "Java Classes for Multi-language Examples"
 
+def iceberg_version = "1.4.2"
+
 dependencies {
     implementation library.java.vendored_guava_32_1_2_jre
     implementation project(path: ":sdks:java:core", configuration: "shadow")
+    implementation project(path: ":model:pipeline", configuration: "shadow")
+    implementation project(path: ":model:job-management", configuration: "shadow")
+    implementation project(path: ":sdks:java:managed")
+    implementation project(path: ":sdks:java:io:iceberg")
+    implementation library.java.hadoop_client
+    implementation library.java.hadoop_common
+//    implementation library.java.junit
+    implementation 'org.apache.parquet:parquet-column:1.14.0'
+    implementation 'org.apache.parquet:parquet-hadoop:1.14.0'
     runtimeOnly project(path: ":examples:java")
     runtimeOnly project(path: ":runners:direct-java", configuration: "shadow")
     runtimeOnly project(path: ":runners:google-cloud-dataflow-java")
     runtimeOnly project(path: ":runners:portability:java")
     implementation library.java.vendored_guava_32_1_2_jre
+    implementation "org.apache.parquet:parquet-column:1.13.1"
     implementation project(":sdks:java:expansion-service")
     permitUnusedDeclared project(":sdks:java:expansion-service") // BEAM-11761
+    permitUnusedDeclared project(":sdks:java:io:iceberg")
+    shadow library.java.vendored_grpc_1_60_1
+    shadow library.java.slf4j_api
+    implementation "org.apache.iceberg:iceberg-core:$iceberg_version"
+    implementation "org.apache.iceberg:iceberg-data:$iceberg_version"
+    implementation "org.apache.iceberg:iceberg-api:$iceberg_version"
+    implementation "org.apache.iceberg:iceberg-parquet:$iceberg_version"
+    implementation "org.apache.iceberg:iceberg-orc:$iceberg_version"
+    permitUnusedDeclared project(":model:pipeline") // BEAM-11761
+    permitUnusedDeclared project(":model:job-management") // BEAM-11761
+
+
+    implementation "com.google.cloud.bigdataoss:gcs-connector:hadoop2-2.2.16"
+
+
+    permitUnusedDeclared library.java.vendored_grpc_1_60_1
+    permitUnusedDeclared("org.apache.iceberg:iceberg-core:$iceberg_version")
+    permitUnusedDeclared("org.apache.iceberg:iceberg-data:$iceberg_version")
+    permitUnusedDeclared("org.apache.iceberg:iceberg-api:$iceberg_version")
+    permitUnusedDeclared("org.apache.iceberg:iceberg-parquet:$iceberg_version")
+    permitUnusedDeclared("org.apache.iceberg:iceberg-orc:$iceberg_version")
+    permitUnusedDeclared("org.apache.iceberg:iceberg-gcp:$iceberg_version")
+
+    permitUnusedDeclared library.java.hadoop_client
+    permitUnusedDeclared("org.apache.parquet:parquet-column:1.14.0")
+    permitUnusedDeclared("org.apache.parquet:parquet-hadoop:1.14.0")
+
+    permitUnusedDeclared "com.google.cloud.bigdataoss:gcs-connector:hadoop2-2.2.16"
 }
 
 task pythonDataframeWordCount(type: JavaExec) {
@@ -52,6 +92,12 @@ task pythonDataframeWordCount(type: JavaExec) {
 task sklearnMinstClassification(type: JavaExec) {
     description "Run the Java pipeline that performns image classification on handwritten digits from the MNIST database"
     mainClass = "org.apache.beam.examples.multilanguage.SklearnMnistClassification"
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task testExpansionServiceClient(type: JavaExec) {
+    description "Test expansion service client"
+    mainClass = "org.apache.beam.examples.multilanguage.TestExpansionServiceClient"
     classpath = sourceSets.main.runtimeClasspath
 }
 

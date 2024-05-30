@@ -635,6 +635,7 @@ class BeamModulePlugin implements Plugin<Project> {
     def sbe_tool_version = "1.25.1"
     def singlestore_jdbc_version = "1.1.4"
     def slf4j_version = "1.7.30"
+    def snakeyaml_version = "1.33.0"
     def spark2_version = "2.4.8"
     def spark3_version = "3.2.2"
     def spotbugs_version = "4.0.6"

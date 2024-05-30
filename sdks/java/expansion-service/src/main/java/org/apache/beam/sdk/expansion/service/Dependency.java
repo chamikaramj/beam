@@ -28,7 +28,7 @@ public abstract class Dependency {
   abstract String getPath();
 
   @JsonCreator
-  static Dependency create(@JsonProperty("path") String path) {
+  public static Dependency create(@JsonProperty("path") String path) {
     return new AutoValue_Dependency(path);
   }
 }

@@ -17,6 +17,8 @@
  */
 package org.apache.beam.sdk.util.construction;
 
+import static org.apache.beam.model.pipeline.v1.ExternalTransforms.ExpansionMethods.Enum.SCHEMA_TRANSFORM;
+
 import com.fasterxml.jackson.core.Version;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,6 +42,7 @@ import java.util.stream.Collectors;
 import org.apache.beam.model.expansion.v1.ExpansionApi;
 import org.apache.beam.model.pipeline.v1.Endpoints;
 import org.apache.beam.model.pipeline.v1.ExternalTransforms;
+import org.apache.beam.model.pipeline.v1.ExternalTransforms.SchemaTransformPayload;
 import org.apache.beam.model.pipeline.v1.RunnerApi;
 import org.apache.beam.model.pipeline.v1.SchemaApi;
 import org.apache.beam.sdk.options.PipelineOptions;
@@ -51,6 +54,7 @@ import org.apache.beam.sdk.util.construction.PTransformTranslation.TransformPayl
 import org.apache.beam.sdk.values.PInput;
 import org.apache.beam.sdk.values.POutput;
 import org.apache.beam.vendor.grpc.v1p60p1.com.google.protobuf.ByteString;
+import org.apache.beam.vendor.grpc.v1p60p1.com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.beam.vendor.grpc.v1p60p1.io.grpc.ManagedChannelBuilder;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.annotations.VisibleForTesting;
 import org.apache.beam.vendor.guava.v32_1_2_jre.com.google.common.base.Splitter;
@@ -113,6 +117,22 @@ public class TransformUpgrader implements AutoCloseable {
                   if (urn != null && urnsToOverride.contains(urn)) {
                     return true;
                   }
+
+                  // Also check if the URN is a schema-transform ID.
+                  if (urn.equals(BeamUrns.getUrn(SCHEMA_TRANSFORM))) {
+                    try {
+                      ExternalTransforms.SchemaTransformPayload schemaTransformPayload =
+                          ExternalTransforms.SchemaTransformPayload.parseFrom(
+                              entry.getValue().getSpec().getPayload());
+                      String schemaTransformId = schemaTransformPayload.getIdentifier();
+                      if (urnsToOverride.contains(schemaTransformId)) {
+                        return true;
+                      }
+                    } catch (InvalidProtocolBufferException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+
                   return false;
                 })
             .map(
@@ -184,18 +204,25 @@ public class TransformUpgrader implements AutoCloseable {
     if (transformToUpgrade == null) {
       throw new IllegalArgumentException("Could not find a transform with the ID " + transformId);
     }
-    ByteString configRowBytes =
-        transformToUpgrade.getAnnotationsOrThrow(PTransformTranslation.CONFIG_ROW_KEY);
-    ByteString configRowSchemaBytes =
-        transformToUpgrade.getAnnotationsOrThrow(PTransformTranslation.CONFIG_ROW_SCHEMA_KEY);
-    SchemaApi.Schema configRowSchemaProto =
-        SchemaApi.Schema.parseFrom(configRowSchemaBytes.toByteArray());
 
-    ExternalTransforms.ExternalConfigurationPayload payload =
-        ExternalTransforms.ExternalConfigurationPayload.newBuilder()
-            .setSchema(configRowSchemaProto)
-            .setPayload(configRowBytes)
-            .build();
+    byte[] payloadBytes = null;
+
+    if (!transformToUpgrade.getSpec().getUrn().equals(BeamUrns.getUrn(SCHEMA_TRANSFORM))) {
+      ByteString configRowBytes =
+          transformToUpgrade.getAnnotationsOrThrow(PTransformTranslation.CONFIG_ROW_KEY);
+      ByteString configRowSchemaBytes =
+          transformToUpgrade.getAnnotationsOrThrow(PTransformTranslation.CONFIG_ROW_SCHEMA_KEY);
+      SchemaApi.Schema configRowSchemaProto =
+          SchemaApi.Schema.parseFrom(configRowSchemaBytes.toByteArray());
+      payloadBytes =
+          ExternalTransforms.ExternalConfigurationPayload.newBuilder()
+              .setSchema(configRowSchemaProto)
+              .setPayload(configRowBytes)
+              .build()
+              .toByteArray();
+    } else {
+      payloadBytes = transformToUpgrade.getSpec().getPayload().toByteArray();
+    }
 
     RunnerApi.PTransform.Builder ptransformBuilder =
         RunnerApi.PTransform.newBuilder()
@@ -203,7 +230,7 @@ public class TransformUpgrader implements AutoCloseable {
             .setSpec(
                 RunnerApi.FunctionSpec.newBuilder()
                     .setUrn(transformToUpgrade.getSpec().getUrn())
-                    .setPayload(ByteString.copyFrom(payload.toByteArray()))
+                    .setPayload(ByteString.copyFrom(payloadBytes))
                     .build());
 
     for (Map.Entry<String, String> entry : transformToUpgrade.getInputsMap().entrySet()) {
@@ -238,6 +265,17 @@ public class TransformUpgrader implements AutoCloseable {
             .addAllRequirements(runnerAPIpipeline.getRequirementsList())
             .build();
 
+    try {
+      String underlyingIdentifier =
+          ExternalTransforms.SchemaTransformPayload.parseFrom(
+                  request.getTransform().getSpec().getPayload())
+              .getIdentifier();
+      System.out.println(
+          "***** underlyingIdentifier from ExpansionRequest: " + underlyingIdentifier);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+
     ExpansionApi.ExpansionResponse response =
         clientFactory.getExpansionServiceClient(transformServiceEndpoint).expand(request);
 
@@ -253,6 +291,7 @@ public class TransformUpgrader implements AutoCloseable {
                         && kv.getValue().getDependenciesCount() != 0)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
+    System.out.println("***** Resolving artifacts...");
     RunnerApi.Components expandedComponents =
         response
             .getComponents()

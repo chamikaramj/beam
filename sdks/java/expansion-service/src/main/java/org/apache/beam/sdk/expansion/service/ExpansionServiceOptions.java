@@ -20,7 +20,10 @@ package org.apache.beam.sdk.expansion.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import org.apache.beam.sdk.expansion.service.JavaClassLookupTransformProvider.AllowList;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.DefaultValueFactory;
@@ -57,6 +60,12 @@ public interface ExpansionServiceOptions extends PipelineOptions {
   ExpansionServiceConfig getExpansionServiceConfig();
 
   void setExpansionServiceConfig(ExpansionServiceConfig configFile);
+
+  @Description("If set to true, uses the Alts server")
+  @Default.Boolean(false)
+  boolean getUseAltsServer();
+
+  void setUseAltsServer(boolean useAltsServer);
 
   /**
    * Loads the allow list from {@link #getJavaClassLookupAllowlistFile}, defaulting to an empty
@@ -96,18 +105,19 @@ public interface ExpansionServiceOptions extends PipelineOptions {
 
     @Override
     public ExpansionServiceConfig create(PipelineOptions options) {
+
       String configFile = options.as(ExpansionServiceOptions.class).getExpansionServiceConfigFile();
       if (configFile != null) {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         File configFileObj = new File(configFile);
         if (!configFileObj.exists()) {
           throw new IllegalArgumentException("Config file " + configFile + " does not exist");
         }
-        try {
-          return mapper.readValue(configFileObj, ExpansionServiceConfig.class);
+        try (InputStream stream = new FileInputStream(configFileObj)) {
+          return ExpansionServiceConfig.parseFromYamlStream(stream);
+        } catch (FileNotFoundException e) {
+          throw new RuntimeException(e);
         } catch (IOException e) {
-          throw new IllegalArgumentException(
-              "Could not load the provided config file " + configFile, e);
+          throw new RuntimeException(e);
         }
       }
 

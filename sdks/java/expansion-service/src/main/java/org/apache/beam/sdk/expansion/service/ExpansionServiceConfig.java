@@ -20,16 +20,22 @@ package org.apache.beam.sdk.expansion.service;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.auto.value.AutoValue;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import org.yaml.snakeyaml.Yaml;
 
 @SuppressWarnings("nullness")
 @AutoValue
 public abstract class ExpansionServiceConfig {
+
+  @SuppressWarnings("mutable")
   public abstract List<String> getAllowlist();
 
+  @SuppressWarnings("mutable")
   public abstract Map<String, List<Dependency>> getDependencies();
 
   public static ExpansionServiceConfig empty() {
@@ -37,13 +43,52 @@ public abstract class ExpansionServiceConfig {
   }
 
   @JsonCreator
-  static ExpansionServiceConfig create(
+  public static ExpansionServiceConfig create(
       @JsonProperty("allowlist") List<String> allowlist,
       @JsonProperty("dependencies") Map<String, List<Dependency>> dependencies) {
     if (allowlist == null) {
       allowlist = new ArrayList<>();
     }
-    System.out.println("Dependencies list: " + dependencies);
     return new AutoValue_ExpansionServiceConfig(allowlist, dependencies);
+  }
+
+  public static ExpansionServiceConfig parseFromYamlStream(InputStream inputStream) {
+    Yaml yaml = new Yaml();
+    Map<Object, Object> config = yaml.load(inputStream);
+
+    List<String> allowList = new ArrayList<>();
+    Map<String, List<Dependency>> dependencies = new HashMap<>();
+    if (config != null) {
+      if (config.get("allowlist") != null) {
+        allowList = (List<String>) config.get("allowlist");
+      }
+
+      if (config.get("dependencies") != null) {
+        Map<String, List<Object>> dependenciesFromConfig =
+            (Map<String, List<Object>>) config.get("dependencies");
+        dependenciesFromConfig.forEach(
+            (k, v) -> {
+              List<Dependency> dependenciesForTransform =
+                  v.stream()
+                      .map(
+                          val -> {
+                            Map<String, Object> depProperties = (Map<String, Object>) val;
+                            String path = (String) depProperties.get("path");
+                            if (path == null) {
+                              throw new IllegalArgumentException(
+                                  "Expected the path to be not null");
+                            }
+                            return Dependency.create(path);
+                          })
+                      .collect(Collectors.toList());
+              dependencies.put(k, dependenciesForTransform);
+            });
+      }
+    } else {
+      throw new IllegalArgumentException(
+          "Could not parse the provided streaming into a non-trivial Expansion Service config");
+    }
+
+    return ExpansionServiceConfig.create(allowList, dependencies);
   }
 }

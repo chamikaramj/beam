@@ -55,6 +55,9 @@ dependencies {
     implementation "org.apache.iceberg:iceberg-orc:$iceberg_version"
     implementation library.java.hadoop_common
 
+    // Needed by Iceberg I/O users that use GCS for the wearhouse location.
+    implementation "com.google.cloud.bigdataoss:gcs-connector:hadoop2-2.2.16"
+
     testImplementation library.java.hadoop_client
     testImplementation library.java.bigdataoss_gcsio
     testImplementation "com.google.cloud.bigdataoss:gcs-connector:hadoop2-2.2.16"

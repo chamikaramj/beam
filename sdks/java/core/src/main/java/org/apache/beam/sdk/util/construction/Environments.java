@@ -390,6 +390,7 @@ public class Environments {
               stagedName);
         } else {
           LOG.info("Stage Artifact '{}' was not found, staging will be ignored.", file);
+          // throw new RuntimeException("Stage Artifact '{}' was not found, staging will be ignored." + file);
         }
         continue;
       }
